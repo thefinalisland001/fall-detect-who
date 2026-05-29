@@ -1,0 +1,5 @@
+dependencies:
+  esp32_p4_function_ev_board_noglib:
+    version: '*'
+  fall_detect:
+    version: '*'

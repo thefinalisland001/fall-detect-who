@@ -1,0 +1,11 @@
+build/
+managed_components/
+dependencies.lock.*.cat_detect
+dependencies.lock.*.dog_detect
+dependencies.lock.*.human_face_detect
+dependencies.lock.*.pedestrian_detect
+sdkconfig
+sdkconfig.old
+*.swp
+*.pyc
+__pycache__/
