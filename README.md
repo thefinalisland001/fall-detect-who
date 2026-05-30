@@ -150,9 +150,29 @@ fall-detect-who/
             └── espdet_pico_224_224_fall.espdl  # 模型文件 (498KB)
 ```
 
-## 训练信息（复现用）
+## 训练信息（v4，复现用）
 
 训练代码位于 `d:\AAAxiaozhi\esp-detection-main`，基于 Ultralytics YOLO 框架 + 自定义 ESP-DL 模块。
+
+### 数据集（v4）
+
+| 数据 | 路径 | 大小 |
+|------|------|------|
+| 正样本数据集 (zip) | `D:\AAAxiaozhi\dataset\fall-detect\Fall Detection.v3-resized640_aug5x-fast.yolov11.zip` | 849 MB |
+| 负样本数据集 (zip) | `D:\AAAxiaozhi\dataset\fall-detect\Negative_sample_dataset.zip` | 117 MB |
+| 训练集路径 | `images/train`（解压后） | — |
+| 验证集路径 | `images/val`（解压后） | — |
+
+> ⚠️ 数据集 zip 超过 GitHub 100MB 限制，不纳入版本管理。请从本地 `D:\AAAxiaozhi\dataset\fall-detect\` 获取。
+
+### 模型版本
+
+| 版本 | 模型文件 | 分支 | 说明 |
+|------|---------|------|------|
+| **v4** | `espdet_pico_224_224_fall_v4.espdl` | [`fall_detect_v4`](https://github.com/thefinalisland001/fall-detect-who/tree/fall_detect_v4) | 最新版本，当前使用 |
+| v3 | `espdet_pico_224_224_fall.espdl` | `main` | 旧版（fall-detect-who 初始版）|
+
+v4 模型组件路径：`D:\AAAxiaozhi\ai-models\models\fall_v4_detect`
 
 ### 训练命令
 
