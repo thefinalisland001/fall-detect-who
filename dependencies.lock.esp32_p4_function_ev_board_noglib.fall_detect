@@ -324,7 +324,7 @@ dependencies:
   fall_detect:
     dependencies: []
     source:
-      path: D:\AAAxiaozhi\esp-who-master\examples\fall-detect-who\components\fall_detect
+      path: D:\AAAxiaozhi\esp-who-master\examples\fall-detect-who-v4\components\fall_detect
       type: local
     version: 0.1.1
   idf:
@@ -338,6 +338,6 @@ direct_dependencies:
 - espressif/fall_detect
 - espressif/usb_host_uvc
 - idf
-manifest_hash: 270f978495f8ec1368637b7254ad280fbcbbae26102cfe838cadb33175f90e2c
+manifest_hash: e8608c044d26554bc9d27a9ab714754934196b7a17e00797e8b63ed176364917
 target: esp32p4
 version: 2.0.0

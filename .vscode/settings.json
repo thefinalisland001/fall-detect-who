@@ -1,13 +1,14 @@
 {
   "idf.currentSetup": "C:\\esp\\v5.5.3\\esp-idf",
   "idf.customExtraVars": {
-    "IDF_EXTRA_ACTIONS_PATH": "d:\\AAAxiaozhi\\esp-who-master\\tools"
+    "IDF_EXTRA_ACTIONS_PATH": "d:\\AAAxiaozhi\\esp-who-master\\tools",
+    "SDKCONFIG_DEFAULTS": "sdkconfig.bsp.esp32_p4_function_ev_board_noglib"
   },
   "clangd.path": "C:\\Espressif\\tools\\esp-clang\\esp-19.1.2_20250312\\esp-clang\\bin\\clangd.exe",
   "clangd.arguments": [
     "--background-index",
     "--query-driver=**",
-    "--compile-commands-dir=d:\\AAAxiaozhi\\esp-who-master\\examples\\fall-detect-who\\build"
+    "--compile-commands-dir=d:\\AAAxiaozhi\\esp-who-master\\examples\\fall-detect-who-v4\\build"
   ],
   "idf.portWin": "COM15",
   "idf.flashType": "UART"

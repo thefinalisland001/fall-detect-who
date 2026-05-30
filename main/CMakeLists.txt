@@ -4,7 +4,5 @@ set(include_dirs    ./)
 
 set(requires who_detect_app)
 
-set(detect_component ${DETECT_MODEL} espressif__${DETECT_MODEL})
-
 idf_component_register(SRC_DIRS ${src_dirs} INCLUDE_DIRS ${include_dirs} REQUIRES ${requires})
-idf_component_optional_requires(PUBLIC ${detect_component})
+idf_component_optional_requires(PUBLIC fall_detect espressif__fall_detect)

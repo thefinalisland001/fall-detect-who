@@ -13,7 +13,7 @@ set(include_dirs    .)
 
 set(requires        esp-dl)
 
-set(packed_model ${BUILD_DIR}/espdl_models/fall_detect.espdl)
+set(packed_model ${BUILD_DIR}/espdl_models/fall_v4_detect.espdl)
 
 idf_component_register(SRC_DIRS ${src_dirs} INCLUDE_DIRS ${include_dirs} REQUIRES ${requires})
 
@@ -26,8 +26,8 @@ if (NOT CONFIG_ESPDET_DETECT_MODEL_IN_SDCARD)
 
     file(MAKE_DIRECTORY ${BUILD_DIR}/espdl_models)
     set(models)
-    if(CONFIG_FLASH_ESPDET_PICO_224_224_FALL)
-        list(APPEND models ${models_dir}/espdet_pico_224_224_fall.espdl)
+    if(CONFIG_FLASH_ESPDET_PICO_224_224_FALL_V4)
+        list(APPEND models ${models_dir}/espdet_pico_224_224_fall_v4.espdl)
     endif()
 
 

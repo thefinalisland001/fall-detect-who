@@ -3,8 +3,8 @@
 #include <filesystem>
 
 #if CONFIG_ESPDET_DETECT_MODEL_IN_FLASH_RODATA
-extern const uint8_t fall_detect_espdl[] asm("_binary_fall_detect_espdl_start");
-static const char *path = (const char *)fall_detect_espdl;
+extern const uint8_t fall_v4_detect_espdl[] asm("_binary_fall_v4_detect_espdl_start");
+static const char *path = (const char *)fall_v4_detect_espdl;
 #elif CONFIG_ESPDET_DETECT_MODEL_IN_FLASH_PARTITION
 static const char *path = "espdet_det";
 #else
@@ -39,7 +39,7 @@ ESPDet::ESPDet(const char *model_name, float score_thr, float nms_thr)
 ESPDetDetect::ESPDetDetect(model_type_t model_type, bool lazy_load) : m_model_type(model_type)
 {
     switch (model_type) {
-    case model_type_t::ESPDET_PICO_224_224_FALL:
+    case model_type_t::ESPDET_PICO_224_224_FALL_V4:
         m_score_thr[0] = espdet_detect::ESPDet::default_score_thr;
         m_nms_thr[0] = espdet_detect::ESPDet::default_nms_thr;
         break;
@@ -54,11 +54,11 @@ ESPDetDetect::ESPDetDetect(model_type_t model_type, bool lazy_load) : m_model_ty
 void ESPDetDetect::load_model()
 {
     switch (m_model_type) {
-    case model_type_t::ESPDET_PICO_224_224_FALL:
-#if CONFIG_FLASH_ESPDET_PICO_224_224_FALL || CONFIG_ESPDET_DETECT_MODEL_IN_SDCARD
-        m_model = new espdet_detect::ESPDet("espdet_pico_224_224_fall.espdl", m_score_thr[0], m_nms_thr[0]);
+    case model_type_t::ESPDET_PICO_224_224_FALL_V4:
+#if CONFIG_FLASH_ESPDET_PICO_224_224_FALL_V4 || CONFIG_ESPDET_DETECT_MODEL_IN_SDCARD
+        m_model = new espdet_detect::ESPDet("espdet_pico_224_224_fall_v4.espdl", m_score_thr[0], m_nms_thr[0]);
 #else
-        ESP_LOGE("fall_detect", "espdet_pico_224_224_fall is not selected in menuconfig.");
+        ESP_LOGE("fall_v4_detect", "espdet_pico_224_224_fall_v4 is not selected in menuconfig.");
 #endif
         break;
     }
