@@ -150,6 +150,159 @@ fall-detect-who/
             └── espdet_pico_224_224_fall.espdl  # 模型文件 (498KB)
 ```
 
-## 代码仓库
+## 训练信息（复现用）
 
-https://github.com/thefinalisland001/fall-detect-who
+训练代码位于 `d:\AAAxiaozhi\esp-detection-main`，基于 Ultralytics YOLO 框架 + 自定义 ESP-DL 模块。
+
+### 训练命令
+
+```bash
+cd d:\AAAxiaozhi\esp-detection-main
+python espdet_run.py \
+  --class_name fall \
+  --dataset datasets/data.yaml \
+  --size 224 224 \
+  --target esp32p4 \
+  --calib_data deploy/fall_calib \
+  --espdl espdet_pico_224_224_fall.espdl \
+  --img espdet.jpg
+```
+
+`espdet_run.py` 串联了完整流程：**Train → Export ONNX → Quantize → 生成 C++ 工程**。
+
+### 数据集
+
+```yaml
+# datasets/data.yaml
+path: D:/AAAxiaozhi/dataset/fall-detect/Fall Detection.v3-resized640_aug5x-fast.yolov11
+train: images/train
+val: images/val
+test: images/test
+
+negative_setting:
+  neg_ratio: 0.15
+  use_extra_neg: True
+  extra_neg_sources:
+    "D:/AAAxiaozhi/dataset/fall-detect/Negative_sample_dataset": 654
+  fix_dataset_length: 20000
+
+names:
+  0: Fall
+```
+
+**关键点：**
+- 单类别（Fall）
+- 使用了负样本数据集（Negative_sample_dataset），配置了负样本比例 `neg_ratio=0.15`，大幅抑制假阳性
+- 数据集打包为 YOLOv11 格式（YOLO 目录结构）
+- 自定义 `YOLOPosNegDataset`（`data/esp_dataset.py`）处理正负样本混合
+
+### 模型架构
+
+```yaml
+# cfg/models/espdet_pico.yaml
+nc: 1                    # 1 类
+activation: nn.ReLU()
+scales:
+  n: [0.50, 0.25, 512]  # depth=0.5, width=0.25, max_channels=512
+
+backbone:                # ESPNet-Pico 轻量级主干
+  Conv(k3s2, 64)         # P1/2
+  DSConv(k3s2, 128)      # P2/4
+  ESPBlockLite(256)      #    ↓
+  DSConv(k3s2, 256)      # P3/8  ← 检测头 P3
+  DSC3k2(256) × 2
+  SCDown(k3s2, 256)      # P4/16 ← 检测头 P4
+  DSC3k2(256) × 2
+  SCDown(k3s2, 512)      # P5/32 ← 检测头 P5
+  DSC3k2(512) × 2
+  SPPF(512, k5)
+  DSConv(k7, 512)
+
+head:                    # FPN 颈 + 自定义 ESPDetect 头
+  Upsample → Concat → ESPBlock(256) → ESPBlock(128)  # P3 head
+  DSConv → Concat → ESPBlock(512)                     # P4 head
+  DSConv → Concat → ESPBlock(512)                     # P5 head
+  ESPDetect(nc=1)  # 自定义检测头，3 层输出
+```
+
+**自定义模块**（`nn/modules/`）：
+| 模块 | 文件 | 说明 |
+|------|------|------|
+| `ESPBlock` | `esp_block.py` | ESP 自定义特征提取块 |
+| `ESPBlockLite` | `esp_block.py` | 轻量版 ESPBlock |
+| `DSConv` / `DSC3k2` / `SCDown` | `esp_conv.py` | 深度可分离卷积变体 |
+| `ESPDetect` | `esp_head.py` | 自定义检测头（Anchor-based，reg_max=1）|
+
+### 训练超参数
+
+```python
+# train.py Train()
+train_setting = dict(
+    data=dataset,         # datasets/data.yaml
+    epochs=300,           # 训练轮数
+    imgsz=imgsz,          # 输入尺寸 224x224
+    batch=128,            # batch size
+    device="0",           # GPU
+    optimizer='AdamW',    # 优化器
+    lr0=0.001,            # 初始学习率
+    lrf=0.01,             # 最终学习率因子（lr_final = lr0 × lrf）
+    cos_lr=True,          # 余弦退火学习率
+    warmup_epochs=5,      # 预热轮数
+    weight_decay=0.0005,  # 权重衰减
+    close_mosaic=30,      # 最后 30 轮关闭 mosaic
+    mosaic=0.8,           # mosaic 增强概率
+    mixup=0.1,            # mixup 增强概率
+    copy_paste=0.0,       # 关闭 copy-paste
+    scale=0.5,            # 尺度抖动
+    shear=0.0,            # 关闭剪切
+    hsv_h=0.015,          # HSV 色调增强
+    hsv_s=0.7,            # HSV 饱和度增强
+    hsv_v=0.4,            # HSV 明度增强
+    rect=False,           # 非矩形训练
+)
+```
+
+### 模型导出
+
+```python
+# deploy/export.py Export()
+- ONNX opset: 13
+- simplify: True（onnxsim）
+- 输出 6 个 tensor：box0, score0, box1, score1, box2, score2
+  （对应 3 个检测层 P3/P4/P5 的 bbox 和 score，尺度为 8/16/32）
+```
+
+### 量化
+
+```python
+# deploy/quantize.py quant_espdet()
+target = "esp32p4"        # 目标芯片
+num_of_bits = 8           # INT8 量化
+calib_steps = 32          # 校准步数
+batchsz = 32              # 校准 batch size
+calib_dataset: CaliDataset  # 归一化 mean=[0,0,0], std=[1,1,1]
+# 量化配置：
+equalization = True        # 启用层间均衡
+eq_iterations = 4          # 均衡迭代次数
+eq_value_threshold = 0.4   # 均衡阈值
+eq_opt_level = 2           # 均衡优化级别
+```
+
+### 输出
+
+量化后生成 `espdet_pico_224_224_fall.espdl`（498 KB），放置到 `components/fall_detect/models/p4/`。
+
+### 一键复现命令
+
+```bash
+cd d:\AAAxiaozhi\esp-detection-main
+python espdet_run.py \
+  --class_name fall \
+  --pretrained_path None \
+  --dataset datasets/data.yaml \
+  --size 224 224 \
+  --target esp32p4 \
+  --calib_data deploy/fall_calib \
+  --espdl espdet_pico_224_224_fall.espdl \
+  --img espdet.jpg
+```
